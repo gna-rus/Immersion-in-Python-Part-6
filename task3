@@ -3,21 +3,26 @@
  Внутри него напишите код, решающий задачу о 8 ферзях. Известно, что на доске 8×8 можно расставить 8 ферзей так, чтобы они не били друг друга.
  Вам дана расстановка 8 ферзей на доске, определите, есть ли среди них пара бьющих друг друга.
  Программа получает на вход восемь пар чисел, каждое число от 1 до 8 - координаты 8 ферзей. Если ферзи не бьют друг друга верните истину, а если бьют - ложь.
- 
- Напишите функцию в шахматный модуль. Используйте генератор случайных чисел для случайной расстановки ферзей в задаче выше. 
+
+ Напишите функцию в шахматный модуль. Используйте генератор случайных чисел для случайной расстановки ферзей в задаче выше.
  Проверяйте различный случайные варианты и выведите 4 успешных расстановки
 """
 
 """
-!!! Для запуска кода введи в териманл python task2.py "1 2 2 4 3 6 4 8 5 3 6 1 7 7 8 5" - это координаты корректного расположения ферзей, которые не пересекаются друг с другом
+!!! Для запуска кода введи в териманл python task3.py "1 2 2 4 3 6 4 8 5 3 6 1 7 7 8 5" - это координаты корректного расположения ферзей, которые не пересекаются друг с другом
+Можно применить флаг --gen тогда программа запустит функцию для поиска 4 комбинацйи пар ферзей которые не пересекаются
+Пример: python task3.py "1 2 2 4 3 6 4 8 5 3 6 1 7 7 8 5" --gen
+Количество итераций поиска ограничено 10_000_000 (при таком количество код стабильно находит 1 решение)
 """
 
 import sys
 import argparse
+import random
 
 
 # Функция для проверки, могут ли ферзи стоять на указанных позициях
 def can_queens_stand(queen_positions):
+    """Функция проверяющая что все ферзи не пересекаются"""
     n = len(queen_positions)
     rows = set()       # множество строк, занятых ферзями
     cols = set()       # множество столбцов, занятых ферзями
@@ -26,9 +31,7 @@ def can_queens_stand(queen_positions):
 
     for row, col in queen_positions:
         # Проверяем, нет ли ферзя на той же строке, колонке или диагоналях
-        print(row, col)
         if row in rows or col in cols or (row + col) in diagonals1 or (row - col) in diagonals2:
-            print('False')
             return False
 
         # Добавляем текущую позицию в множества
@@ -36,37 +39,79 @@ def can_queens_stand(queen_positions):
         cols.add(col)
         diagonals1.add(row + col)
         diagonals2.add(row - col)
-
     return True
+
+
+def generate_unique_pairs():
+    """Функция генерирующая координаты ферзей"""
+    numbers = list(range(1, 9))  # список чисел от 1 до 8
+    pairs = []
+
+    while len(pairs) < 8:
+        a = random.choice(numbers)
+        b = random.choice(numbers)
+
+        if a != b and (a, b) not in pairs and (b, a) not in pairs:
+            pairs.append((a, b))
+
+    return pairs
+
 
 # Основная программа
 if __name__ == "__main__":
     # Чтение координат ферзей из аргументов командной строки
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--ver', action='store_true', help="Подробный вывод")
+    parser.add_argument('--gen', action='store_true', help="Подробный вывод")
     parser.add_argument('positions', type=str, help='Введи координаты 8 ферзей')
 
     args = parser.parse_args()
-    print(args.positions.split(' '))
-    list_args = args.positions.split(' ')
-    print(len(list_args))
 
-    #
-    if len(list_args) < 16:
-        print("Недостаточно параметров! Пожалуйста, укажите 8 пар координат.")
-        sys.exit(1)
+    if args.gen == False: # Проверка есть ли флаг --gen или нет
 
-    positions = []
-    for i in range(0,15,2):
-        x = int(list_args[i])   # строка
-        y = int(list_args[i+1]) # столбец
-        positions.append((x, y))
-    print(positions)
-    result = can_queens_stand(positions)
+        print(args.positions.split(' '))
+        list_args = args.positions.split(' ')
 
-    print(args.ver)
-    # if result:
-    #     print("Ферзи стоят корректно!")
-    # else:
-    #     print("Есть конфликт между ферзями.")
+
+        if len(list_args) < 16: # Проверка на количество пар координат
+            print("Недостаточно параметров! Пожалуйста, укажите 8 пар координат.")
+            sys.exit(1)
+
+        positions = []
+        for i in range(0,15,2):
+            x = int(list_args[i])   # строка
+            y = int(list_args[i+1]) # столбец
+            positions.append((x, y))
+
+        result = can_queens_stand(positions)
+        if result:
+            print("Ферзи стоят корректно!")
+        else:
+            print("Есть конфликт между ферзями.")
+
+    elif args.gen == True:
+        print("gen==True")
+        count_True = 4 # предельное количество комбинаций пар с правильным решением
+        count = 0 # счиетчик найденных решений
+        count_neg = 1_000_000 # Предельное количество генераций пар координат ферзей
+        list_result = []
+
+        while count <= count_True:
+            unique_pairs = generate_unique_pairs()
+
+            result_gen = can_queens_stand(unique_pairs)
+            if result_gen:
+                count += 1
+                list_result.append(unique_pairs)
+                print(f"{count}: {unique_pairs}")
+            else:
+                count_neg -= 1
+                print(f"Осталось попыток: {count_neg}")
+
+
+            if count_neg == 0:
+                print(f"count={count}")
+                break
+
+        print(list_result)
+
