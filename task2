@@ -40,7 +40,7 @@ def can_queens_stand(queen_positions):
 if __name__ == "__main__":
     # Чтение координат ферзей из аргументов командной строки
     parser = argparse.ArgumentParser()
-    parser.add_argument('date', type=str, help='Дата в формате DD.MM.YYYY')
+    parser.add_argument('date', type=str, help='Введи координаты 8 ферзей по аналогии X-Y-X-Y-X-Y....')
     args = parser.parse_args()
     print(args.date.split(' '))
     list_args = args.date.split(' ')
